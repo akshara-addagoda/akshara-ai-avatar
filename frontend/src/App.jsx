@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import AvatarViewer from "./components/AvatarViewer";
 
-const API_URL = "http://localhost:5001";
+// 🔥 IMPORTANT: replace with YOUR Render backend URL
+const API_URL = "https://akshara-ai-avatar.onrender.com";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -13,18 +14,18 @@ function App() {
   const audioRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  // 🔥 auto scroll
+  // 🔥 Auto scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🎤 MIC INPUT (AUTO SEND)
+  // 🎤 MIC INPUT
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Speech not supported");
+      alert("Speech not supported in this browser");
       return;
     }
 
@@ -85,6 +86,7 @@ function App() {
 
         audio.onplay = () => setIsSpeaking(true);
         audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
 
         audio.play();
       }
@@ -112,7 +114,7 @@ function App() {
       }, 20);
 
     } catch (err) {
-      console.error(err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -218,7 +220,8 @@ const styles = {
     flex: 1,
     padding: "10px",
     borderRadius: "5px",
-    border: "none"
+    border: "none",
+    outline: "none"
   },
   button: {
     padding: "10px 15px",
