@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import AvatarViewer from "./components/AvatarViewer";
 
-// 🔥 IMPORTANT: replace with YOUR Render backend URL
-const API_URL = "https://akshara-ai-avatar.onrender.com";
+// ✅ CORRECT BACKEND URL
+const API_URL = "https://akshara-ai-avatar-backend.onrender.com";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -14,7 +14,7 @@ function App() {
   const audioRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  // 🔥 Auto scroll
+  // Auto scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -56,9 +56,14 @@ function App() {
   // 🤖 ASK AI
   const handleAsk = async (inputText) => {
     const finalMessage = inputText || message;
+
     if (!finalMessage.trim()) return;
 
-    const userMsg = { type: "user", text: finalMessage };
+    const userMsg = {
+      type: "user",
+      text: finalMessage
+    };
+
     setMessages((prev) => [...prev, userMsg]);
 
     setLoading(true);
@@ -70,12 +75,19 @@ function App() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ message: finalMessage })
+        body: JSON.stringify({
+          message: finalMessage
+        })
       });
+
+      // ✅ HANDLE FAILED REQUESTS
+      if (!res.ok) {
+        throw new Error("Server error");
+      }
 
       const data = await res.json();
 
-      // 🔊 AUDIO HANDLING
+      // 🔊 AUDIO
       if (data.audioUrl) {
         if (audioRef.current) {
           audioRef.current.pause();
@@ -93,13 +105,19 @@ function App() {
 
       // ✨ TYPING EFFECT
       let i = 0;
-      const fullText = data.reply;
 
-      const botMsg = { type: "bot", text: "" };
+      const fullText = data.reply || "No response";
+
+      const botMsg = {
+        type: "bot",
+        text: ""
+      };
+
       setMessages((prev) => [...prev, botMsg]);
 
       const interval = setInterval(() => {
         i++;
+
         botMsg.text = fullText.slice(0, i);
 
         setMessages((prev) => {
@@ -114,7 +132,15 @@ function App() {
       }, 20);
 
     } catch (err) {
-      console.error("Error:", err);
+      console.error("❌ Error:", err);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          text: "Server error. Please try again."
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -136,36 +162,55 @@ function App() {
             key={index}
             style={{
               ...styles.message,
-              alignSelf: msg.type === "user" ? "flex-end" : "flex-start",
-              backgroundColor: msg.type === "user" ? "#4CAF50" : "#333"
+              alignSelf:
+                msg.type === "user"
+                  ? "flex-end"
+                  : "flex-start",
+
+              backgroundColor:
+                msg.type === "user"
+                  ? "#4CAF50"
+                  : "#333"
             }}
           >
             {msg.text}
           </div>
         ))}
 
-        {loading && <p style={{ color: "gray" }}>Thinking...</p>}
+        {loading && (
+          <p style={{ color: "gray" }}>
+            Thinking...
+          </p>
+        )}
+
         <div ref={chatEndRef} />
       </div>
 
-      {/* ✏️ Input */}
+      {/* ✏️ INPUT */}
       <div style={styles.inputBox}>
         <input
           style={styles.input}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ask something..."
-          onKeyDown={(e) => e.key === "Enter" && handleAsk()}
+          onKeyDown={(e) =>
+            e.key === "Enter" && handleAsk()
+          }
         />
 
-        <button style={styles.button} onClick={() => handleAsk()}>
+        <button
+          style={styles.button}
+          onClick={() => handleAsk()}
+        >
           Send
         </button>
 
         <button
           style={{
             ...styles.micButton,
-            background: listening ? "red" : "#2196F3"
+            background: listening
+              ? "red"
+              : "#2196F3"
           }}
           onClick={startListening}
         >
@@ -186,13 +231,16 @@ const styles = {
     alignItems: "center",
     padding: "20px"
   },
+
   title: {
     marginBottom: "10px"
   },
+
   avatar: {
     width: "100%",
     height: "320px"
   },
+
   chatBox: {
     flex: 1,
     width: "100%",
@@ -205,17 +253,20 @@ const styles = {
     borderRadius: "10px",
     background: "#1e1e1e"
   },
+
   message: {
     padding: "10px",
     borderRadius: "10px",
     maxWidth: "70%"
   },
+
   inputBox: {
     display: "flex",
     width: "100%",
     maxWidth: "600px",
     marginTop: "10px"
   },
+
   input: {
     flex: 1,
     padding: "10px",
@@ -223,6 +274,7 @@ const styles = {
     border: "none",
     outline: "none"
   },
+
   button: {
     padding: "10px 15px",
     marginLeft: "10px",
@@ -232,6 +284,7 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer"
   },
+
   micButton: {
     padding: "10px",
     marginLeft: "5px",
