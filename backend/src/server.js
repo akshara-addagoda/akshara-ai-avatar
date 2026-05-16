@@ -12,10 +12,8 @@ const app = express();
 // ✅ Render dynamic port
 const port = process.env.PORT || 5001;
 
-// ✅ CORS
+// ✅ Middleware
 app.use(cors());
-
-// ✅ JSON parsing
 app.use(express.json());
 
 // 📁 Create audio folder
@@ -25,10 +23,10 @@ if (!fs.existsSync(audioDir)) {
   fs.mkdirSync(audioDir);
 }
 
-// 🎧 Serve audio files
+// 🎧 Serve audio
 app.use("/audio", express.static(audioDir));
 
-// ✅ Health check
+// ✅ Health Check
 app.get("/health", (req, res) => {
   res.json({
     status: "ok"
@@ -48,7 +46,7 @@ app.post("/chat", async (req, res) => {
 
     console.log("🔥 User:", message);
 
-    // 🧠 OpenRouter AI Request
+    // 🧠 OpenRouter Request
     const aiRes = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -69,45 +67,30 @@ app.post("/chat", async (req, res) => {
               content: `
 You are Akshara Addagoda, a B.Tech Information Technology student from Hyderabad, India.
 
-You are preparing for IT placements with a goal of building a strong career in software development and securing a good opportunity in the IT industry.
-
 You are interested in:
-- Artificial Intelligence
+- AI
 - Machine Learning
 - Web Development
 
 Projects:
-- AI Avatar Web Application using OpenRouter and ElevenLabs
-- Real-Time Sign Language to Text and Speech Conversion
-- Autism Risk Screening System using Machine Learning
-- Jarvis AI Voice Assistant using Python
+- AI Avatar Web Application
+- Sign Language to Text & Speech
+- Jarvis AI Assistant
+- Autism Risk Screening
 
 Skills:
 - Java
 - Python
-- C
-- HTML
-- CSS
-- JavaScript
 - React
 - Node.js
 - CNN
 - Deep Learning
-- Computer Vision
-- Git & GitHub
-
-Personality:
-- Honest
-- Calm
-- Curious
-- Practical
-- Grounded
 
 Communication style:
-- Clear English
-- Concise answers
-- Real examples
-- No exaggeration
+- Simple English
+- Clear answers
+- Honest responses
+- Practical examples
 `
             },
 
@@ -120,7 +103,7 @@ Communication style:
       }
     );
 
-    // ❌ OPENROUTER ERROR
+    // ❌ OpenRouter Error
     if (!aiRes.ok) {
       const err = await aiRes.text();
 
@@ -132,6 +115,7 @@ Communication style:
       });
     }
 
+    // ✅ Parse AI Response
     const aiData = await aiRes.json();
 
     const reply =
@@ -140,62 +124,10 @@ Communication style:
 
     console.log("✅ AI Reply:", reply);
 
-    // 🔊 ElevenLabs TTS
-    const ttsRes = await fetch(
-      "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-      {
-        method: "POST",
-
-        headers: {
-          "xi-api-key": process.env.ELEVENLABS_API_KEY,
-          "Content-Type": "application/json",
-          Accept: "audio/mpeg"
-        },
-
-        body: JSON.stringify({
-          text: reply,
-          model_id: "eleven_multilingual_v2"
-        })
-      }
-    );
-
-    // ❌ TTS ERROR
-    if (!ttsRes.ok) {
-      const err = await ttsRes.text();
-
-      console.error("❌ ElevenLabs Error:", err);
-
-      return res.status(500).json({
-        error: "TTS failed",
-        details: err
-      });
-    }
-
-    // 🔊 Convert audio buffer
-    const audioBuffer = Buffer.from(
-      await ttsRes.arrayBuffer()
-    );
-
-    // 💾 Save audio
-    const fileName = `audio-${Date.now()}.mp3`;
-
-    const filePath = path.join(
-      audioDir,
-      fileName
-    );
-
-    fs.writeFileSync(filePath, audioBuffer);
-
-    console.log("🔊 Audio saved:", fileName);
-
-    // ✅ Send response
+    // ✅ TEXT RESPONSE ONLY
     res.json({
       reply,
-
-      // ✅ IMPORTANT FIX
-      audioUrl: `${req.protocol}://${req.get(
-        "host"
-      )}/audio/${fileName}`
+      audioUrl: null
     });
 
   } catch (error) {
@@ -208,7 +140,7 @@ Communication style:
   }
 });
 
-// 🚀 Start server
+// 🚀 Start Server
 app.listen(port, () => {
   console.log(`🚀 Backend running on port ${port}`);
 });
